@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+
+  user-db:
+    image: postgres:latest
+    container_name: user-service-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    networks:
+      - hero-network
+
+  booking-db:
+    image: postgres:latest
+    container_name: booking-service-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: bookingdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    networks:
+      - hero-network
+
+  redis:
+    image: redis:latest
+    container_name: hero_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - hero-network
+
+
+
+  user-service:
+    build: ./wh-user-service-main
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    depends_on: 
+      - user-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/userdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=root
+      - JWT_SECRET=awgnkjnajef3u2oejf84fkldsnvneshguio5483o8gjldsnvkjrg58lkngslknvr
+      - JWT_EXPIRATION=86400000
+    networks:
+      - hero-network
+
+  booking-service:
+    build: ./booking-service
+    container_name: booking-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - booking-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://booking-db:5432/bookingdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=root
+      - JWT_SECRET=awgnkjnajef3u2oejf84fkldsnvneshguio5483o8gjldsnvkjrg58lkngslknvr
+      - JWT_EXPIRATION=86400000
+    networks:
+      - hero-network
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - booking-service
+    environment:
+      - JWT_SECRET=awgnkjnajef3u2oejf84fkldsnvneshguio5483o8gjldsnvkjrg58lkngslknvr
+      - JWT_EXPIRATION=86400000
+      - USER_SERVICE_URL=http://user-service:8081
+      - BOOKING_SERVICE_URL=http://booking-service:8082
+    networks:
+      - hero-network
+
+networks:
+  hero-network:
+    driver: bridge
