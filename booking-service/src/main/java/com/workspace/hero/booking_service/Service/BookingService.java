@@ -6,14 +6,15 @@ import com.workspace.hero.booking_service.Entity.Booking;
 import com.workspace.hero.booking_service.Entity.BookingEntity;
 import com.workspace.hero.booking_service.Entity.Workspace;
 import com.workspace.hero.booking_service.Entity.WorkspaceEntity;
+import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
 import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -62,8 +63,8 @@ public class BookingService {
                 workspaceToCreate.pricePerHour()
         );
 
-        workspaceRepositoryrepository.save(createdEntity);
-        return toDomainWorkspace(createdEntity);
+        WorkspaceEntity savedEntity = workspaceRepositoryrepository.save(createdEntity);
+        return toDomainWorkspace(savedEntity);
     }
 
     public List<Booking> findAllBooking() {
@@ -85,10 +86,10 @@ public class BookingService {
         return toDomainBooking(bookingEntity);
     }
 
-
+    @Validated
     @Transactional
     public Booking createBooking(
-            @Valid Booking bookingToCreate,
+            Booking bookingToCreate,
             Long userId
     )
     {
@@ -110,10 +111,6 @@ public class BookingService {
             throw new IllegalArgumentException("Sorry, this time is already taken");
         }
 
-        if (bookingToCreate.workspace().status().equals(WorkSpaceStatus.BUSY)){
-            throw new IllegalStateException("Workspace is busy");
-        }
-
         workspaceEntity.setStatus(WorkSpaceStatus.BUSY);
         workspaceRepositoryrepository.save(workspaceEntity);
 
@@ -132,6 +129,7 @@ public class BookingService {
                 null,
                 userId,
                 workspaceEntity,
+                BookingStatus.ACTIVE,
                 bookingToCreate.startTime(),
                 bookingToCreate.endTime()
         );

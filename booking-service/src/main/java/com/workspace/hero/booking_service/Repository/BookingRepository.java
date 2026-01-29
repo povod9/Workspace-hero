@@ -1,6 +1,7 @@
 package com.workspace.hero.booking_service.Repository;
 
 import com.workspace.hero.booking_service.Entity.BookingEntity;
+import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
 import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,8 +19,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
             LocalDateTime endTime
     );
 
-    List<BookingEntity> findAllByEndTimeBefore(
-            LocalDateTime now
+    List<BookingEntity> findAllByEndTimeBeforeAndStatus(
+            LocalDateTime now,
+            BookingStatus status
     );
 
     @Query("SELECT COUNT(b) > 0 FROM BookingEntity b " +

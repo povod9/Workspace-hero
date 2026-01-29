@@ -87,7 +87,7 @@ public class BookingController {
 
     @PostMapping("/create")
     public ResponseEntity<Booking> createBooking(
-            @RequestBody @Valid Booking bookingToCreate,
+            @Valid @RequestBody Booking bookingToCreate,
             @RequestHeader("X-User-Id") Long userId
     )
     {

@@ -13,6 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
     @Autowired
     private JwtCore jwtCore;
+    @Autowired
+    private SecurityPathControl pathControl;
 
     public AuthenticationFilter() {
         super(Config.class);
@@ -40,13 +42,11 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
                 jwtCore.validationToken(token);
 
-                String email = jwtCore.extractEmail(token); // или getSubject()
+                String email = jwtCore.extractEmail(token);
                 String role = jwtCore.extractRole(token);
                 String userId = jwtCore.extractId(token).toString();
 
-                if(path.contains("/booking/workspace/create") && !"MANAGER".equals(role)){
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only manager can create a workspace");
-                }
+                pathControl.checkAccess(path,role);
 
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-User-Id", userId)

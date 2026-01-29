@@ -1,8 +1,11 @@
 package com.workspace.hero.booking_service.Entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,6 +30,10 @@ public class BookingEntity {
     @JoinColumn(name = "workspace_id", nullable = false)
     private WorkspaceEntity workspaceEntity;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    BookingStatus status;
+
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime startTime;
@@ -35,15 +42,26 @@ public class BookingEntity {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime endTime;
 
+
+
     public BookingEntity() {
     }
 
-    public BookingEntity(Long id, Long userId, WorkspaceEntity workspaceEntity, LocalDateTime startTime, LocalDateTime endTime) {
+    public BookingEntity(Long id, Long userId, WorkspaceEntity workspaceEntity,BookingStatus status, LocalDateTime startTime, LocalDateTime endTime) {
         this.id = id;
         this.userId = userId;
         this.workspaceEntity = workspaceEntity;
+        this.status = status;
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+    public BookingStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BookingStatus status) {
+        this.status = status;
     }
 
     public Long getId() {

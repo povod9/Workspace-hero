@@ -2,6 +2,7 @@ package com.workspace.hero.booking_service.Schedul;
 
 import com.workspace.hero.booking_service.Entity.BookingEntity;
 import com.workspace.hero.booking_service.Entity.WorkspaceEntity;
+import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
 import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @Component
 @EnableScheduling
-public class BookingCleaner {
+public class WorkspaceReleaser {
 
     @Autowired
     private BookingRepository bookingRepository;
@@ -28,12 +29,18 @@ public class BookingCleaner {
     public void cleanupExpiredBooking(){
         LocalDateTime now = LocalDateTime.now();
 
-        List<BookingEntity> expiredBooking = bookingRepository.findAllByEndTimeBefore(now);
+        List<BookingEntity> expiredBookings = bookingRepository.findAllByEndTimeBeforeAndStatus(
+                now, BookingStatus.ACTIVE
+        );
 
-        for(BookingEntity booking : expiredBooking){
+        for (BookingEntity booking : expiredBookings) {
             WorkspaceEntity ws = booking.getWorkspaceEntity();
             ws.setStatus(WorkSpaceStatus.FREE);
             workspaceRepository.save(ws);
+
+            booking.setStatus(BookingStatus.COMPLETED);
+            bookingRepository.save(booking);
+
         }
     }
 }

@@ -16,7 +16,6 @@ public record Workspace(
         String name,
         @NotNull
         WorkSpaceType type,
-        @NotNull
         WorkSpaceStatus status,
         @NotNull
         @Positive
