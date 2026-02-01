@@ -1,5 +1,6 @@
 package com.workspace.hero.booking_service.Entity;
 
+import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ public record Booking(
         Long userId,
         @NotNull
         Workspace workspace,
+        BookingStatus status,
         @FutureOrPresent
         LocalDateTime startTime,
         @Future

@@ -49,9 +49,12 @@ public class GlobalHandler {
                 .body(errorDto);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(exception = {
+            IllegalStateException.class,
+            IllegalArgumentException.class
+    })
     public ResponseEntity<ExceptionDto> handleBadRequest(
-            IllegalArgumentException e
+            Exception e
     )
     {
         log.error("Handle error" + e);

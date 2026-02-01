@@ -12,21 +12,24 @@ import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 
 @Service
 public class BookingService {
 
+    private final RedisTemplate<String, Object> redisTemplate;
     private final WorkspaceRepository workspaceRepositoryrepository;
     private final BookingRepository bookingRepository;
     private final UserClient userClient;
 
-    public BookingService(WorkspaceRepository workspaceRepositoryrepository, BookingRepository bookingRepository, UserClient userClient) {
+    public BookingService(RedisTemplate<String, Object> redisTemplate, WorkspaceRepository workspaceRepositoryrepository, BookingRepository bookingRepository, UserClient userClient) {
+        this.redisTemplate = redisTemplate;
         this.workspaceRepositoryrepository = workspaceRepositoryrepository;
         this.bookingRepository = bookingRepository;
         this.userClient = userClient;
@@ -93,52 +96,63 @@ public class BookingService {
             Long userId
     )
     {
+        String lockKey = "lock:workspace:" + bookingToCreate.workspace().id();
 
-        WorkspaceEntity workspaceEntity = workspaceRepositoryrepository.findByNameAndType(
-                bookingToCreate.workspace().name(),
-                bookingToCreate.workspace().type()
-                )
-                .orElseThrow(() -> new EntityNotFoundException("Cannot found workspace by id=" + bookingToCreate.workspace().id()));
+        Boolean acquired = redisTemplate.opsForValue()
+                .setIfAbsent(lockKey, "LOCKED", Duration.ofSeconds(5));
 
-        boolean isOccupied = bookingRepository.isWorkspaceOccupied(
-                workspaceEntity.getId(),
-                bookingToCreate.startTime(),
-                bookingToCreate.endTime()
-        );
-
-
-        if(isOccupied){
-            throw new IllegalArgumentException("Sorry, this time is already taken");
+        if (Boolean.FALSE.equals(acquired)){
+            throw new IllegalStateException("This table is currently being booked by another user, please try again in a second.");
         }
 
-        workspaceEntity.setStatus(WorkSpaceStatus.BUSY);
-        workspaceRepositoryrepository.save(workspaceEntity);
+        try {
+            WorkspaceEntity workspaceEntity = workspaceRepositoryrepository.findByNameAndType(
+                            bookingToCreate.workspace().name(),
+                            bookingToCreate.workspace().type()
+                    )
+                    .orElseThrow(() -> new EntityNotFoundException("Cannot found workspace by id=" + bookingToCreate.workspace().id()));
+
+            boolean isOccupied = bookingRepository.isWorkspaceOccupied(
+                    workspaceEntity.getId(),
+                    bookingToCreate.startTime(),
+                    bookingToCreate.endTime()
+            );
 
 
-        UserDto user = userClient.getUserById(userId);
+            if (isOccupied) {
+                throw new IllegalArgumentException("Sorry, this time is already taken");
+            }
 
-        long hours = java.time.Duration.between(bookingToCreate.startTime(), bookingToCreate.endTime()).toHours();
-        if (hours <= 0) hours = 1;
-        BigDecimal totalPrice = workspaceEntity.getPricePerHour().multiply(BigDecimal.valueOf(hours));
+            workspaceEntity.setStatus(WorkSpaceStatus.BUSY);
+            workspaceRepositoryrepository.save(workspaceEntity);
 
-        if(user.balance().compareTo(totalPrice) < 0){
-            throw new IllegalArgumentException("Insufficient funds, your balance: " + user.balance());
+
+            UserDto user = userClient.getUserById(userId);
+
+            long hours = java.time.Duration.between(bookingToCreate.startTime(), bookingToCreate.endTime()).toHours();
+            if (hours <= 0) hours = 1;
+            BigDecimal totalPrice = workspaceEntity.getPricePerHour().multiply(BigDecimal.valueOf(hours));
+
+            if (user.balance().compareTo(totalPrice) < 0) {
+                throw new IllegalArgumentException("Insufficient funds, your balance: " + user.balance());
+            }
+
+            var createdEntity = new BookingEntity(
+                    null,
+                    userId,
+                    workspaceEntity,
+                    BookingStatus.ACTIVE,
+                    bookingToCreate.startTime(),
+                    bookingToCreate.endTime()
+            );
+
+            bookingRepository.save(createdEntity);
+            userClient.deductBalance(userId, totalPrice);
+
+            return toDomainBooking(createdEntity);
+        }finally {
+            redisTemplate.delete(lockKey);
         }
-
-        var createdEntity = new BookingEntity(
-                null,
-                userId,
-                workspaceEntity,
-                BookingStatus.ACTIVE,
-                bookingToCreate.startTime(),
-                bookingToCreate.endTime()
-        );
-
-        bookingRepository.save(createdEntity);
-        userClient.deductBalance(userId, totalPrice);
-
-        return toDomainBooking(createdEntity);
-
     }
 
     private Booking toDomainBooking(
@@ -149,6 +163,7 @@ public class BookingService {
                 booking.getId(),
                 booking.getUserId(),
                 toDomainWorkspace(booking.getWorkspaceEntity()),
+                booking.getStatus(),
                 booking.getStartTime(),
                 booking.getEndTime()
         );
