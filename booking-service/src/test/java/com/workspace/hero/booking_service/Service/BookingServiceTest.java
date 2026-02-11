@@ -57,7 +57,8 @@ class BookingServiceTest {
         when(valueOperations.setIfAbsent(anyString(),any(),any()))
                 .thenReturn(true);
 
-        when(userClient.getUserById(1L)).thenReturn(new UserDto(1L,
+        when(userClient.getUserById(1L)).
+                thenReturn(new UserDto(1L,
                 "asfwAf@gmail.com",
                 "MANAGER",
                 new BigDecimal("10000")));
@@ -91,7 +92,8 @@ class BookingServiceTest {
                 LocalDateTime.now().plusMinutes(15)
         ), 1L);
 
-        verify(bookingRepository, times(1)).save(any());
+        verify(bookingRepository, times(1))
+                .save(any());
 
     }
 
@@ -112,7 +114,7 @@ class BookingServiceTest {
                 BigDecimal.TEN
         );
 
-        Workspace workspaceEntityFake = new Workspace(
+        Workspace workspaceDto = new Workspace(
                 1L,
                 "Desk A1",
                 WorkSpaceType.DESK,
@@ -120,7 +122,8 @@ class BookingServiceTest {
                 BigDecimal.TEN
         );
 
-        when(userClient.getUserById(1L)).thenReturn(new UserDto(
+        when(userClient.getUserById(1L))
+                .thenReturn(new UserDto(
                 1L,
                 "safawf@gmail.com",
                 "USER",
@@ -134,24 +137,25 @@ class BookingServiceTest {
         bookingService.createBooking(new Booking(
                 null,
                 null,
-                workspaceEntityFake,
+                workspaceDto,
                 BookingStatus.ACTIVE,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15)
         ),1L);
 
-        verify(bookingRepository, times(1))
+        verify(bookingRepository, never())
                 .save(any());
     }
 
     @Test
-    void createWorkspace(){
-        when(workspaceRepository.save(any())).thenReturn(new WorkspaceEntity(
+    void createWorkspaceSuccessfully(){
+        when(workspaceRepository.save(any()))
+                .thenReturn(new WorkspaceEntity(
                 null,
                 "Room A-1",
                 WorkSpaceType.ROOM,
                 WorkSpaceStatus.FREE,
-                BigDecimal.TEN
+                new BigDecimal("10")
         ));
 
         bookingService.createWorkspace(new Workspace(
@@ -159,9 +163,94 @@ class BookingServiceTest {
                 "Room A-1",
                 WorkSpaceType.ROOM,
                 WorkSpaceStatus.FREE,
-                BigDecimal.TEN
+                new BigDecimal("10")
         ));
 
-        verify(workspaceRepository, times(1)).save(any());
+        verify(workspaceRepository, times(1))
+                .save(any());
+    }
+
+    @Test
+    void createBookingBoundaryTesting(){
+
+        when(redisTemplate.opsForValue())
+                .thenReturn(valueOperations);
+
+        when(valueOperations.setIfAbsent(anyString(),any(), any()))
+                .thenReturn(true);
+
+        Workspace workspaceEntity = new Workspace(
+                null,
+                "Desk A-1",
+                WorkSpaceType.DESK,
+                WorkSpaceStatus.FREE,
+                new BigDecimal("10")
+        );
+
+        Workspace workspaceDto = new Workspace(
+                null,
+                "Desk A-1",
+                WorkSpaceType.DESK,
+                WorkSpaceStatus.FREE,
+                new BigDecimal("10")
+        );
+
+        doReturn(Optional.of(workspaceEntity))
+                .when(workspaceRepository)
+                .findByNameAndType(anyString(),any());
+
+        bookingService.createBooking(new Booking(
+                null,
+                null,
+                workspaceDto,
+                BookingStatus.ACTIVE,
+                LocalDateTime.now(),
+                LocalDateTime.now().minusMinutes(15)
+        ), 1L);
+
+        verify(bookingRepository, never())
+                .save(any());
+    }
+
+    @Test
+    void createBookingRedisTemplateTesting(){
+
+        when(redisTemplate.opsForValue()).
+                thenReturn(valueOperations);
+
+        when(valueOperations.setIfAbsent(anyString(),any(),any()))
+                .thenReturn(false);
+
+        WorkspaceEntity workspaceEntity = new WorkspaceEntity(
+                null,
+                "Desk A-1",
+                WorkSpaceType.DESK,
+                WorkSpaceStatus.FREE,
+                new BigDecimal("10")
+        );
+
+        Workspace workspaceDto = new Workspace(
+                null,
+                "Desk A-1",
+                WorkSpaceType.DESK,
+                WorkSpaceStatus.FREE,
+                new BigDecimal("10")
+        );
+
+        doReturn(Optional.of(workspaceEntity))
+                .when(workspaceRepository)
+                .findByNameAndType(anyString(),any());
+
+        bookingService.createBooking(new Booking(
+                null,
+                null,
+                workspaceDto,
+                BookingStatus.ACTIVE,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(15)
+        ), 1L);
+
+        verify(bookingRepository, never())
+                .save(any());
     }
 }

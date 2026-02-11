@@ -63,17 +63,21 @@ public class BookingService {
             Workspace workspaceToCreate
     )
     {
-        var createdEntity = new WorkspaceEntity(
-                workspaceToCreate.id(),
-                workspaceToCreate.name(),
-                workspaceToCreate.type(),
-                WorkSpaceStatus.FREE,
-                workspaceToCreate.pricePerHour()
-        );
+            var createdEntity = new WorkspaceEntity(
+                    workspaceToCreate.id(),
+                    workspaceToCreate.name(),
+                    workspaceToCreate.type(),
+                    WorkSpaceStatus.FREE,
+                    workspaceToCreate.pricePerHour()
+            );
 
-        WorkspaceEntity savedEntity = workspaceRepositoryrepository.save(createdEntity);
-        log.info("The workspace was successfully saved");
-        return toDomainWorkspace(savedEntity);
+            if(workspaceToCreate.pricePerHour().compareTo(BigDecimal.ZERO ) < 0){
+                throw new IllegalArgumentException("Price cannot be negative");
+            }
+
+            WorkspaceEntity savedEntity = workspaceRepositoryrepository.save(createdEntity);
+            log.info("The workspace was successfully saved");
+            return toDomainWorkspace(savedEntity);
     }
 
     public List<Booking> findAllBooking() {
@@ -104,6 +108,9 @@ public class BookingService {
     {
         log.info("Starting booking process for user: {}", userId);
 
+        if (bookingToCreate.startTime().isAfter(bookingToCreate.endTime())){
+            throw new IllegalArgumentException("You cannot make a reservation, because end time are less then start time");
+        }
         String lockKey = "lock:workspace:" + bookingToCreate.workspace().id();
 
         Boolean acquired = redisTemplate.opsForValue()
@@ -130,6 +137,8 @@ public class BookingService {
             if (isOccupied) {
                 throw new IllegalArgumentException("Sorry, this time is already taken");
             }
+
+
 
             workspaceEntity.setStatus(WorkSpaceStatus.BUSY);
             workspaceRepositoryrepository.save(workspaceEntity);
