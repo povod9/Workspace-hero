@@ -4,9 +4,14 @@ server:
 jwt:
   secret: "awgnkjnajef3u2oejf84fkldsnvneshguio5483o8gjldsnvkjrg58lkngslknvr"
   expiration: 86400000
+
 spring:
   application:
     name: gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
   cloud:
     gateway:
       routes:

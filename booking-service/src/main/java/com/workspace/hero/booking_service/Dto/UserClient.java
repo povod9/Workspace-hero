@@ -1,6 +1,5 @@
 package com.workspace.hero.booking_service.Dto;
 
-import com.workspace.hero.booking_service.Feign.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

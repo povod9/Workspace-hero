@@ -34,8 +34,6 @@ services:
     networks:
       - hero-network
 
-
-
   user-service:
     build: ./wh-user-service-main
     container_name: user-service

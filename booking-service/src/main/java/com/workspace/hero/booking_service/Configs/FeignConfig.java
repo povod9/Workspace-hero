@@ -1,4 +1,4 @@
-package com.workspace.hero.booking_service.Feign;
+package com.workspace.hero.booking_service.Configs;
 
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;

@@ -1,5 +1,6 @@
 package com.workspace.hero.booking_service.Service;
 
+import com.workspace.hero.booking_service.Controller.BookingController;
 import com.workspace.hero.booking_service.Dto.UserClient;
 import com.workspace.hero.booking_service.Dto.UserDto;
 import com.workspace.hero.booking_service.Entity.Booking;
@@ -12,6 +13,8 @@ import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +25,8 @@ import java.util.List;
 
 @Service
 public class BookingService {
+
+    private final Logger log = LoggerFactory.getLogger(BookingController.class);
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final WorkspaceRepository workspaceRepositoryrepository;
@@ -67,6 +72,7 @@ public class BookingService {
         );
 
         WorkspaceEntity savedEntity = workspaceRepositoryrepository.save(createdEntity);
+        log.info("The workspace was successfully saved");
         return toDomainWorkspace(savedEntity);
     }
 
@@ -96,6 +102,8 @@ public class BookingService {
             Long userId
     )
     {
+        log.info("Starting booking process for user: {}", userId);
+
         String lockKey = "lock:workspace:" + bookingToCreate.workspace().id();
 
         Boolean acquired = redisTemplate.opsForValue()
@@ -132,6 +140,8 @@ public class BookingService {
             long hours = java.time.Duration.between(bookingToCreate.startTime(), bookingToCreate.endTime()).toHours();
             if (hours <= 0) hours = 1;
             BigDecimal totalPrice = workspaceEntity.getPricePerHour().multiply(BigDecimal.valueOf(hours));
+
+            log.info("User balance checked successfully");
 
             if (user.balance().compareTo(totalPrice) < 0) {
                 throw new IllegalArgumentException("Insufficient funds, your balance: " + user.balance());
@@ -171,7 +181,7 @@ public class BookingService {
         return newBooking;
     }
 
-    private Workspace toDomainWorkspace (
+    public Workspace toDomainWorkspace (
             WorkspaceEntity workspace
     )
     {
