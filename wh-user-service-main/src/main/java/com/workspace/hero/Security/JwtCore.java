@@ -52,4 +52,11 @@ public class JwtCore {
                 .get("role", String.class);
     }
 
+    public void validateTokenOrThrow(String token){
+        Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
+    }
+
 }

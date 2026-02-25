@@ -10,6 +10,8 @@ import com.workspace.hero.Repository.UserRepository;
 import com.workspace.hero.Security.JwtCore;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,7 @@ public class UserService {
         this.jwtCore = jwtCore;
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
     public List<UserDto> getAllUser() {
 
         List<UserEntity> allUser = repository.findAll();
@@ -38,7 +41,16 @@ public class UserService {
                 .toList();
     }
 
-    public User createUser(
+    @PreAuthorize("hasRole('MANAGER')")
+    public UserDto getById(Long id) {
+
+        UserEntity userEntity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find user by that id=" + id));
+
+        return toDto(userEntity);
+    }
+
+    public void createUser(
             User userToCreate
     ) {
 
@@ -46,11 +58,7 @@ public class UserService {
             throw new IllegalArgumentException("Id should be null");
         }
 
-        var allEntity = repository.findAll();
-
-        boolean ismailExist = allEntity.stream().anyMatch(entity -> entity.getEmail().equals(userToCreate.email()));
-
-        if(ismailExist){
+        if(repository.existsByEmail(userToCreate.email())){
             throw new IllegalArgumentException("That email already registered in system");
         }
 
@@ -67,10 +75,9 @@ public class UserService {
         repository.save(createdEntity);
 
 
-        return toDomainUser(createdEntity);
     }
 
-    public Manager createManager(
+    public void createManager(
             Manager managerToCreate
     )
     {
@@ -78,11 +85,7 @@ public class UserService {
             throw new IllegalArgumentException("Id should be null");
         }
 
-        var allEntity = repository.findAll();
-
-        boolean ismailExist = allEntity.stream().anyMatch(entity -> entity.getEmail().equals(managerToCreate.email()));
-
-        if(ismailExist){
+        if(repository.existsByEmail(managerToCreate.email())){
             throw new IllegalArgumentException("That email already registered in system");
         }
 
@@ -97,57 +100,8 @@ public class UserService {
         );
 
         repository.save(createdEntity);
-        return toDomainManager(createdEntity);
     }
 
-
-    public UserDto getById(Long id) {
-
-        UserEntity userEntity = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find user by that id=" + id));
-
-        return toDto(userEntity);
-    }
-
-    private UserDto toDto (
-            UserEntity user
-    )
-    {
-        return new UserDto(
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getBalance(),
-                user.getRole()
-        );
-    }
-
-    private User toDomainUser(
-            UserEntity user
-    )
-    {
-
-        return new User(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getPassword()
-        );
-    }
-
-    private Manager toDomainManager(
-            UserEntity user
-    )
-    {
-        return new Manager(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getPassword()
-        );
-    }
 
 
     public String login(LoginRequest loginRequest) {
@@ -164,6 +118,7 @@ public class UserService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public UserDto topUp(
             Long id,
             BigDecimal amount
@@ -183,6 +138,7 @@ public class UserService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public UserDto deductBalance(
             Long id,
             BigDecimal amount
@@ -200,4 +156,19 @@ public class UserService {
 
         return toDto(repository.save(userEntity));
     }
+
+    private UserDto toDto (
+            UserEntity user
+    )
+    {
+        return new UserDto(
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getBalance(),
+                user.getRole()
+        );
+    }
+
+
 }

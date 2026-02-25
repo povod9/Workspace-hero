@@ -109,7 +109,7 @@ public class BookingService {
         log.info("Starting booking process for user: {}", userId);
 
         if (bookingToCreate.startTime().isAfter(bookingToCreate.endTime())){
-            throw new IllegalArgumentException("You cannot make a reservation, because end time are less then start time");
+            throw new IllegalArgumentException("You cannot make a reservation, because end time is less then start time");
         }
         String lockKey = "lock:workspace:" + bookingToCreate.workspace().id();
 

@@ -51,29 +51,29 @@ public class UserController {
 
 
     @PostMapping("/register/user")
-    public ResponseEntity<User> createUser
+    public ResponseEntity<Void> createUser
             (
                     @RequestBody @Valid User userToCreate
             ){
         log.info("Called method createUser");
 
-        var createUser = service.createUser(userToCreate);
+        service.createUser(userToCreate);
 
         return ResponseEntity.status(201)
-                .body(createUser);
+                .build();
     }
 
     @PostMapping("/register/manager")
-    public ResponseEntity<Manager> createManager
+    public ResponseEntity<Void> createManager
             (
                     @RequestBody @Valid Manager managerToCreate
             ){
         log.info("Called method createManager");
 
-        var createManager = service.createManager(managerToCreate);
 
+        service.createManager(managerToCreate);
         return ResponseEntity.status(201)
-                .body(createManager);
+                .build();
     }
 
     @PostMapping("/login")

@@ -3,7 +3,6 @@ package com.workspace.hero.booking_service.Controller;
 
 import com.workspace.hero.booking_service.Entity.Booking;
 import com.workspace.hero.booking_service.Entity.Workspace;
-import com.workspace.hero.booking_service.Kafka.BookingProducer;
 import com.workspace.hero.booking_service.Service.BookingService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -25,11 +24,9 @@ import java.util.List;
 public class BookingController {
     private final Logger log = LoggerFactory.getLogger(BookingController.class);
     private final BookingService service;
-    private final BookingProducer producer;
 
-    public BookingController(BookingService service, BookingProducer producer) {
+    public BookingController(BookingService service) {
         this.service = service;
-        this.producer = producer;
     }
 
     @GetMapping("/workspace")
@@ -102,11 +99,6 @@ public class BookingController {
                 .body(createdBooking);
     }
 
-    @GetMapping("/test/kafka")
-    public String text(@RequestParam String msg){
-        producer.sendMessage(msg);
-        return "Send: " + msg;
-    }
 
 
 }

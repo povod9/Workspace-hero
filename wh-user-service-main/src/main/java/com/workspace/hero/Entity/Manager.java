@@ -1,5 +1,6 @@
 package com.workspace.hero.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.workspace.hero.Entity.enums.Role;
 import jakarta.validation.constraints.Email;
