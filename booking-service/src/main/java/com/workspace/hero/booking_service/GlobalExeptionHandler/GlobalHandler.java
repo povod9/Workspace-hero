@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +23,7 @@ public class GlobalHandler {
     {
         log.error("Handle error" + e);
 
-        var errorDto = new ExceptionDto(
+        ExceptionDto errorDto = new ExceptionDto(
                 "Internal server error",
                 e.getMessage(),
                 LocalDateTime.now()
@@ -32,14 +33,14 @@ public class GlobalHandler {
                 .body(errorDto);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ExceptionDto> handleNotFound(
             EntityNotFoundException e
     )
     {
         log.error("Handle error" + e);
 
-        var errorDto = new ExceptionDto(
+        ExceptionDto errorDto = new ExceptionDto(
                 "Entity Not Found Exception",
                 e.getMessage(),
                 LocalDateTime.now()
@@ -59,7 +60,7 @@ public class GlobalHandler {
     {
         log.error("Handle error" + e);
 
-        var errorDto = new ExceptionDto(
+        ExceptionDto errorDto = new ExceptionDto(
                 "Bad Request",
                 e.getMessage(),
                 LocalDateTime.now()
@@ -68,4 +69,21 @@ public class GlobalHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(errorDto);
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ExceptionDto> handleForbidden(
+            AccessDeniedException e
+    )
+    {
+        log.error("Handle error " + e);
+
+        ExceptionDto errorDto = new ExceptionDto(
+                "Forbidden",
+                e.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(errorDto);
+    }
+
 }

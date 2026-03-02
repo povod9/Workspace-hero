@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -100,14 +102,14 @@ public class UserController {
         return ResponseEntity.ok(service.topUp(id,amount));
     }
 
-    @PostMapping("/{id}/deduct")
+    @PostMapping("/me/deduct")
     public ResponseEntity<UserDto> deductBalance(
-            @PathVariable("id") Long id,
             @RequestParam("amount") BigDecimal amount
     )
     {
         log.info("Called method deductBalance");
-        var deduct = service.deductBalance(id, amount);
+
+        var deduct = service.deductBalance(amount);
         return ResponseEntity.status(200)
                 .body(deduct);
     }

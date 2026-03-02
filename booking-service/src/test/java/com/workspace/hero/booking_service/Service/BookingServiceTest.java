@@ -6,7 +6,6 @@ import com.workspace.hero.booking_service.Entity.Booking;
 import com.workspace.hero.booking_service.Entity.Workspace;
 import com.workspace.hero.booking_service.Entity.WorkspaceEntity;
 import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
-import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Entity.enums.WorkSpaceType;
 import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
@@ -22,7 +21,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,7 +65,6 @@ class BookingServiceTest {
                 1L,
                 "Desk A1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 BigDecimal.TEN
         );
 
@@ -75,7 +72,6 @@ class BookingServiceTest {
                 1L,
                 "Desk A1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 BigDecimal.TEN
         );
 
@@ -110,7 +106,6 @@ class BookingServiceTest {
                 1L,
                 "Desk A1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 BigDecimal.TEN
         );
 
@@ -118,7 +113,6 @@ class BookingServiceTest {
                 1L,
                 "Desk A1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 BigDecimal.TEN
         );
 
@@ -154,7 +148,6 @@ class BookingServiceTest {
                 null,
                 "Room A-1",
                 WorkSpaceType.ROOM,
-                WorkSpaceStatus.FREE,
                 new BigDecimal("10")
         ));
 
@@ -162,7 +155,6 @@ class BookingServiceTest {
                 null,
                 "Room A-1",
                 WorkSpaceType.ROOM,
-                WorkSpaceStatus.FREE,
                 new BigDecimal("10")
         ));
 
@@ -183,7 +175,6 @@ class BookingServiceTest {
                 null,
                 "Desk A-1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 new BigDecimal("10")
         );
 
@@ -191,7 +182,6 @@ class BookingServiceTest {
                 null,
                 "Desk A-1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 new BigDecimal("10")
         );
 
@@ -225,7 +215,6 @@ class BookingServiceTest {
                 null,
                 "Desk A-1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 new BigDecimal("10")
         );
 
@@ -233,7 +222,6 @@ class BookingServiceTest {
                 null,
                 "Desk A-1",
                 WorkSpaceType.DESK,
-                WorkSpaceStatus.FREE,
                 new BigDecimal("10")
         );
 

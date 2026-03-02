@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,11 +90,13 @@ public class BookingController {
 
     @PostMapping("/create")
     public ResponseEntity<Booking> createBooking(
-            @Valid @RequestBody Booking bookingToCreate,
-            @RequestHeader("X-User-Id") Long userId
+            @Valid @RequestBody Booking bookingToCreate
     )
     {
         log.info("Called method createBooking");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) auth.getDetails();
+
         var createdBooking = service.createBooking(bookingToCreate, userId);
 
         return ResponseEntity.status(201)

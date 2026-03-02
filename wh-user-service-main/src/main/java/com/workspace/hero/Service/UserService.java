@@ -12,6 +12,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -138,14 +140,16 @@ public class UserService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('USER','MANAGER')")
     public UserDto deductBalance(
-            Long id,
             BigDecimal amount
     )
     {
-        UserEntity userEntity = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Not found user by id=" + id));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = (Long) auth.getDetails();
+
+        UserEntity userEntity = repository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Not found user by id=" + userId));
 
         if(userEntity.getBalance().compareTo(amount) < 0){
             throw new IllegalArgumentException("Not enough money for deduction");

@@ -1,11 +1,7 @@
-package com.workspace.hero.gateway.Security;
+package com.workspace.hero.booking_service.Security;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,38 +12,22 @@ import java.nio.charset.StandardCharsets;
 public class JwtCore {
 
     @Value("${jwt.secret}")
-    private String secret;
+    private String jwtSecret;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
-
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    private SecretKey getSigningKey(){
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String extractEmail(
             String token
-    ) {
+    )
+    {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
-    }
-
-    public void validationToken(
-            String token
-    )
-    {
-        try{
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
     }
 
     public String extractRole(
@@ -71,7 +51,17 @@ public class JwtCore {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .get("id",Long.class);
+                .get("id", Long.class);
+    }
+
+    public void validateTokenOrThrow(
+            String token
+    )
+    {
+        Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
     }
 
 

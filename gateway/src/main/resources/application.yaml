@@ -2,16 +2,14 @@ server:
   port: 8080
 
 jwt:
-  secret: "awgnkjnajef3u2oejf84fkldsnvneshguio5483o8gjldsnvkjrg58lkngslknvr"
-  expiration: 86400000
-
+  secret: ${JWT_SECRET}
+#  autoconfigure:
+ #   exclude:
+  #    - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+   #   - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
 spring:
   application:
     name: gateway
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
-      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
   cloud:
     gateway:
       routes:
@@ -19,11 +17,7 @@ spring:
           uri: ${USER_SERVICE_URL:http://user-service:8081}
           predicates:
             - Path=/users/**
-          filters:
-            - name: AuthenticationFilter
         - id: booking-service-route
           uri: ${BOOKING_SERVICE_URL:http://booking-service:8082}
           predicates:
             - Path=/booking/**
-          filters:
-            - name: AuthenticationFilter

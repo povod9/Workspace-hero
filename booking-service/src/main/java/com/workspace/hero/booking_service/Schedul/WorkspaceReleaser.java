@@ -3,7 +3,6 @@ package com.workspace.hero.booking_service.Schedul;
 import com.workspace.hero.booking_service.Entity.BookingEntity;
 import com.workspace.hero.booking_service.Entity.WorkspaceEntity;
 import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
-import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
 import jakarta.transaction.Transactional;
@@ -21,8 +20,6 @@ public class WorkspaceReleaser {
 
     @Autowired
     private BookingRepository bookingRepository;
-    @Autowired
-    private WorkspaceRepository workspaceRepository;
 
     @Scheduled(fixedDelay = 60000)
     @Transactional
@@ -34,10 +31,6 @@ public class WorkspaceReleaser {
         );
 
         for (BookingEntity booking : expiredBookings) {
-            WorkspaceEntity ws = booking.getWorkspaceEntity();
-            ws.setStatus(WorkSpaceStatus.FREE);
-            workspaceRepository.save(ws);
-
             booking.setStatus(BookingStatus.COMPLETED);
             bookingRepository.save(booking);
 

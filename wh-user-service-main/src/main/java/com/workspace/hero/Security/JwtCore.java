@@ -52,6 +52,18 @@ public class JwtCore {
                 .get("role", String.class);
     }
 
+    public Long extractId(
+            String token
+    )
+    {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("id", Long.class);
+    }
+
     public void validateTokenOrThrow(String token){
         Jwts.parser()
                 .verifyWith(getSigningKey())

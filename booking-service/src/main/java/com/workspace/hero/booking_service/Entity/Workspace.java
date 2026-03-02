@@ -1,6 +1,5 @@
 package com.workspace.hero.booking_service.Entity;
 
-import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Entity.enums.WorkSpaceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +15,6 @@ public record Workspace(
         String name,
         @NotNull
         WorkSpaceType type,
-        WorkSpaceStatus status,
         @NotNull
         @Positive
         BigDecimal pricePerHour

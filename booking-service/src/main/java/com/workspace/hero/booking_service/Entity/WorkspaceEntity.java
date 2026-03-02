@@ -1,6 +1,5 @@
 package com.workspace.hero.booking_service.Entity;
 
-import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Entity.enums.WorkSpaceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,31 +27,21 @@ public class WorkspaceEntity {
     @Enumerated(EnumType.STRING)
     private WorkSpaceType type;
 
-    @Column
-    @Enumerated(EnumType.STRING)
-    private WorkSpaceStatus status;
-
     @Column(nullable = false)
     private BigDecimal pricePerHour;
 
     public WorkspaceEntity() {
     }
 
-    public WorkspaceEntity(Long id, String name, WorkSpaceType type, WorkSpaceStatus status, BigDecimal pricePerHour) {
+    public WorkspaceEntity(Long id, String name, WorkSpaceType type, BigDecimal pricePerHour) {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.status = status;
         this.pricePerHour = pricePerHour;
     }
 
-    public WorkSpaceStatus getStatus() {
-        return status;
-    }
 
-    public void setStatus(WorkSpaceStatus status) {
-        this.status = status;
-    }
+
 
     public Long getId() {
         return id;

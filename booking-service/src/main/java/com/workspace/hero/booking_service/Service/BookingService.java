@@ -2,13 +2,11 @@ package com.workspace.hero.booking_service.Service;
 
 import com.workspace.hero.booking_service.Controller.BookingController;
 import com.workspace.hero.booking_service.Dto.UserClient;
-import com.workspace.hero.booking_service.Dto.UserDto;
 import com.workspace.hero.booking_service.Entity.Booking;
 import com.workspace.hero.booking_service.Entity.BookingEntity;
 import com.workspace.hero.booking_service.Entity.Workspace;
 import com.workspace.hero.booking_service.Entity.WorkspaceEntity;
 import com.workspace.hero.booking_service.Entity.enums.BookingStatus;
-import com.workspace.hero.booking_service.Entity.enums.WorkSpaceStatus;
 import com.workspace.hero.booking_service.Repository.BookingRepository;
 import com.workspace.hero.booking_service.Repository.WorkspaceRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -59,6 +58,7 @@ public class BookingService {
         return toDomainWorkspace(workspaceEntity);
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
     public Workspace createWorkspace(
             Workspace workspaceToCreate
     )
@@ -67,7 +67,6 @@ public class BookingService {
                     workspaceToCreate.id(),
                     workspaceToCreate.name(),
                     workspaceToCreate.type(),
-                    WorkSpaceStatus.FREE,
                     workspaceToCreate.pricePerHour()
             );
 
@@ -80,6 +79,7 @@ public class BookingService {
             return toDomainWorkspace(savedEntity);
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
     public List<Booking> findAllBooking() {
 
         List<BookingEntity> bookingEntities = bookingRepository.findAll();
@@ -89,6 +89,7 @@ public class BookingService {
                 .toList();
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
     public Booking findByIdBooking(
             Long id
     )
@@ -114,7 +115,7 @@ public class BookingService {
         String lockKey = "lock:workspace:" + bookingToCreate.workspace().id();
 
         Boolean acquired = redisTemplate.opsForValue()
-                .setIfAbsent(lockKey, "LOCKED", Duration.ofSeconds(5));
+                .setIfAbsent(lockKey, "LOCKED", Duration.ofSeconds(15));
 
         if (Boolean.FALSE.equals(acquired)){
             throw new IllegalStateException("This table is currently being booked by another user, please try again in a second.");
@@ -139,22 +140,12 @@ public class BookingService {
             }
 
 
-
-            workspaceEntity.setStatus(WorkSpaceStatus.BUSY);
-            workspaceRepositoryrepository.save(workspaceEntity);
-
-
-            UserDto user = userClient.getUserById(userId);
-
             long hours = java.time.Duration.between(bookingToCreate.startTime(), bookingToCreate.endTime()).toHours();
             if (hours <= 0) hours = 1;
             BigDecimal totalPrice = workspaceEntity.getPricePerHour().multiply(BigDecimal.valueOf(hours));
+            userClient.deductBalance(totalPrice);
 
-            log.info("User balance checked successfully");
-
-            if (user.balance().compareTo(totalPrice) < 0) {
-                throw new IllegalArgumentException("Insufficient funds, your balance: " + user.balance());
-            }
+            workspaceRepositoryrepository.save(workspaceEntity);
 
             var createdEntity = new BookingEntity(
                     null,
@@ -166,7 +157,6 @@ public class BookingService {
             );
 
             bookingRepository.save(createdEntity);
-            userClient.deductBalance(userId, totalPrice);
 
             return toDomainBooking(createdEntity);
         }finally {
@@ -190,7 +180,7 @@ public class BookingService {
         return newBooking;
     }
 
-    public Workspace toDomainWorkspace (
+    private Workspace toDomainWorkspace (
             WorkspaceEntity workspace
     )
     {
@@ -198,7 +188,6 @@ public class BookingService {
                 workspace.getId(),
                 workspace.getName(),
                 workspace.getType(),
-                workspace.getStatus(),
                 workspace.getPricePerHour()
         );
 
