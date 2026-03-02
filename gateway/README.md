@@ -1,60 +1,50 @@
 ## API Gateway (Workspace Hero)
-The central entry point for the Workspace Hero microservices ecosystem. It handles security, routing, and user context propagation across the cluster.
+
+The central entry point for the Workspace Hero microservices ecosystem. It is responsible for **request routing** to internal services.
+
+Note: The Gateway does **not** perform JWT validation/authorization. Authentication and RBAC are enforced in downstream services (User Service / Booking Service).
+
+---
 
 ## Tech Stack
-* **Java 17 & Spring Boot 3.4.2**
 
-* **Spring Cloud Gateway (Reactive)**
+- **Java 17 & Spring Boot 3.4.2**
+- **Spring Cloud Gateway (Reactive)**
+- **Spring WebFlux**
 
-* **JJWT (Java JWT) (Token parsing and validation)**
-
-* **Spring WebFlux**
+---
 
 ## Key Responsibilities
-1. Centralized Authentication
-   Validates incoming JWT tokens using a shared secret key.
 
-Automatically rejects requests with expired or malformed tokens before they reach internal services.
+### 1) Dynamic Routing
+Routes traffic to the appropriate microservice based on URL patterns:
 
-2. User Context Propagation (Header Enrichment)
-   After successful validation, the Gateway extracts claims from the JWT and injects them into the HTTP headers for downstream services:
+- `/users/**` → `user-service`
+- `/booking/**` → `booking-service`
 
-X-User-Id: The unique database ID of the user.
+### 2) Edge service / API entry point
+Acts as a single entry point for clients and keeps internal service addresses hidden behind one public endpoint.
 
-X-User-Email: The user's email address.
+---
 
-X-User-Role: The user's security role (e.g., USER, MANAGER).
+## Security Model (important)
 
-3. Role-Based Access Control 
-   Implements path-based security checks in the AuthenticationFilter.
+- The Gateway **does not parse or validate JWT**.
+- The Gateway **does not enrich requests** with identity headers like `X-User-Id` / `X-User-Role`.
+- Each internal service validates JWT and applies authorization rules independently (Spring Security + `@PreAuthorize`).
 
-Example: Restricts access to /booking/workspace/create strictly to users with the MANAGER role.
+---
 
-4. Dynamic Routing
-   Routes traffic to the appropriate microservices based on URL patterns:
+## Environment Variables / Configuration
 
-* /users/** → user-service 
+Typical configuration values:
 
-* /booking/** → booking-service
+- `USER_SERVICE_URL` — Address of the user microservice
+- `BOOKING_SERVICE_URL` — Address of the booking microservice
 
-## Security Configuration
-The Gateway uses a custom AuthenticationFilter to intercept every request.
+Example:
 
-Validation Logic:
-
-Check for Authorization header with Bearer prefix.
-
-Verify JWT signature and expiration date.
-
-Extract user identity and role.
-
-Perform path-level authority check (e.g., Manager-only routes).
-
-## Environment Variables
-Required for the Gateway to function correctly:
-
-JWT_SECRET — Must match the secret used by user-service for signing.
-
-USER_SERVICE_URL — Address of the user microservice.
-
-BOOKING_SERVICE_URL — Address of the booking microservice.
+```properties
+user-service.url=http://user-service:8081
+booking-service.url=http://booking-service:8082
+```

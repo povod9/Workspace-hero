@@ -1,29 +1,33 @@
-## Workspace Hero — Microservices Ecosystem
-Workspace Hero is a distributed platform designed to manage office workspaces, desks, and meeting rooms. It features a modern microservices architecture with centralized authentication, automated scheduling, and inter-service communication.
+# Workspace Hero — Microservices Ecosystem
+
+Workspace Hero is a distributed platform designed to manage office workspaces, desks, and meeting rooms. It uses a microservices architecture with centralized authentication, inter-service communication, and time-based reservation logic.
 
 ## System Architecture
-* **The project is built using a Monorepo structure, managed by a parent Maven project.**
 
-* **API Gateway: The entry point. Handles JWT validation, role-based access control (RBAC), and request routing.**
+The project is built as a **monorepo** managed by a parent Maven project and includes:
 
-* **User Service: Manages user profiles, authentication (JWT generation), and financial balances.**
-
-* **Booking Service: Handles workspace availability, reservations, and automated status management.**
-
+- **API Gateway**: Single entry point for clients. Responsible for routing requests to internal services.
+- **User Service**: Manages authentication (JWT generation), user profiles, and financial balances.
+- **Booking Service**: Handles workspace availability, reservations, and booking-related logic.
 
 ## Features & Logic
- Centralized Security
 
-* **JWT Authentication: Users log in via User-Service. All subsequent requests pass through the Gateway.**
+### Security and Authentication (JWT)
 
-* **Header Propagation: The Gateway extracts user identity and injects it into X-User-Id and X-User-Role headers for internal services.**
+- **JWT Authentication**: Users authenticate via **User-Service**, which issues a JWT.
+- **Service-level authorization**: The **Gateway** does **not** validate or parse JWT claims. Each downstream service validates JWT and enforces authorization rules.
+- **No identity headers**: The platform does **not** rely on `X-User-Id` / `X-User-Role` propagation. User identity is derived from the JWT in each service (via Spring Security context).
+- **RBAC**: Role-based restrictions (e.g., `MANAGER`-only endpoints) are enforced at the **service level** using Spring Security / `@PreAuthorize`.
 
-* **RBAC: Specific actions (like creating workspaces) are restricted to the MANAGER role at the Gateway level.**
+### Booking & Availability (time-based)
 
-## Automated Booking Lifecycle
-* **Dynamic Status: Workspaces automatically switch to BUSY upon a successful reservation.**
+- **Time-based availability**: A workspace is considered busy only for the time interval of an active booking.
+- **Automated lifecycle**: A scheduler may be used to finalize/expire bookings, but “busy now” can always be computed dynamically from booking time ranges.
 
-* **Booking Finalizer: A background scheduler in the Booking-Service monitors expired bookings and resets workspaces to FREE.**
+### Financial Integration
 
-## Financial Integration
-Atomic Transactions: The Booking-Service communicates with the User-Service via Feign Clients to verify and deduct funds before confirming a reservation.
+- **Atomic booking flow**: The Booking-Service charges the user before persisting a reservation.
+- **Current-user deduction**: Booking-Service calls User-Service using a JWT-protected endpoint:
+    - `POST /users/me/deduct?amount=...`
+      User-Service determines the user from the JWT (no userId is passed from Booking-Service).
+- **Authorization propagation**: Booking-Service forwards the incoming `Authorization: Bearer ...` header to User-Service via Feign configuration/interceptor.
